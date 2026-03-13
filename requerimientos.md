@@ -11,7 +11,7 @@
 
 # Requerimientos de la Aplicación
 
-**Nombre provisional:** `firewall-tui`
+**Nombre provisional:** `easyfirewall`
 **Tipo:** Aplicación TUI (Terminal User Interface) para Linux
 **Lenguaje:** Rust
 

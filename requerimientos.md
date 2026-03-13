@@ -307,7 +307,7 @@ La aplicación debe registrar eventos como:
 Logs sugeridos:
 
 ```
-/var/log/firewall-tui.log
+/var/log/easyfirewall.log
 ```
 
 ---
@@ -438,7 +438,7 @@ Para integración con automatización.
 Permitir ejecutar:
 
 ```
-firewall-tui --apply config.yaml
+easyfirewall --apply config.yaml
 ```
 
 Esto permitiría usar la herramienta en pipelines.
@@ -450,7 +450,7 @@ Esto permitiría usar la herramienta en pipelines.
 Modo seguro que solo permita visualizar reglas:
 
 ```
-firewall-tui --read-only
+easyfirewall --read-only
 ```
 
 Útil para auditorías.

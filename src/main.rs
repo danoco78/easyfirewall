@@ -2,11 +2,12 @@ mod app;
 mod config;
 mod events;
 mod firewall;
+mod forms;
 mod ui;
 
 use anyhow::Result;
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -66,18 +67,43 @@ async fn main() -> Result<()> {
         ui.set_selected_rule(app.selected_index());
         ui.set_show_details(app.show_details());
 
-        terminal.draw(|f| ui.render_frame(f))?;
+        terminal.draw(|f| {
+            ui.render_frame(f);
+            // Renderizar formulario si está activo
+            if let Some(form) = app.form() {
+                forms::FormRenderer::render(f, form);
+            }
+        })?;
 
         // Esperar evento
         if let Some(event) = event_handler.next().await? {
-            // Manejar refresh de reglas
-            if event == events::AppEvent::Refresh {
-                if let Err(e) = app.load_rules().await {
-                    eprintln!("Error refreshing rules: {}", e);
+            // Si hay un formulario activo, manejar eventos de teclado directamente
+            if app.has_active_form() {
+                // Leer evento de teclado crudo
+                if let Ok(key_event) = crossterm::event::read() {
+                    if let Some(form) = app.form_mut() {
+                        form.handle_input(&key_event);
+
+                        // Chequear si el formulario confirmó
+                        if form.confirmed {
+                            if let Err(e) = app.save_form().await {
+                                // Error guardando el formulario
+                                eprintln!("Error saving form: {}", e);
+                            }
+                        }
+                    }
                 }
             } else {
-                // Manejar otros eventos
-                app.handle_event(event);
+                // Manejar eventos normales de la aplicación
+                // Manejar refresh de reglas
+                if event == events::AppEvent::Refresh {
+                    if let Err(e) = app.load_rules().await {
+                        eprintln!("Error refreshing rules: {}", e);
+                    }
+                } else {
+                    // Manejar otros eventos
+                    app.handle_event(event);
+                }
             }
         }
     }

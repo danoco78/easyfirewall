@@ -16,6 +16,10 @@ pub enum AppEvent {
     Down,
     Enter,
     Refresh,
+    AddRule,
+    DeleteRule,
+    EditRule,
+    Cancel,
     Unknown,
 }
 
@@ -53,6 +57,14 @@ impl EventHandler {
         match (key.code, key.modifiers) {
             (KeyCode::Char('q'), KeyModifiers::NONE) => AppEvent::Quit,
             (KeyCode::Char('Q'), KeyModifiers::NONE) => AppEvent::Quit,
+            (KeyCode::Char('a'), KeyModifiers::NONE) => AppEvent::AddRule,
+            (KeyCode::Char('A'), KeyModifiers::NONE) => AppEvent::AddRule,
+            (KeyCode::Char('d'), KeyModifiers::NONE) => AppEvent::DeleteRule,
+            (KeyCode::Char('D'), KeyModifiers::NONE) => AppEvent::DeleteRule,
+            (KeyCode::Char('e'), KeyModifiers::NONE) => AppEvent::EditRule,
+            (KeyCode::Char('E'), KeyModifiers::NONE) => AppEvent::EditRule,
+            (KeyCode::Char('c'), KeyModifiers::NONE) | (KeyCode::Esc, _) => AppEvent::Cancel,
+            (KeyCode::Char('C'), KeyModifiers::NONE) => AppEvent::Cancel,
             (KeyCode::Up, _) | (KeyCode::Char('k'), KeyModifiers::NONE) => AppEvent::Up,
             (KeyCode::Down, _) | (KeyCode::Char('j'), KeyModifiers::NONE) => AppEvent::Down,
             (KeyCode::Enter, _) => AppEvent::Enter,
@@ -104,6 +116,30 @@ mod tests {
 
         let key_R = KeyEvent::new(KeyCode::Char('R'), KeyModifiers::NONE);
         assert_eq!(handler.map_key_event(key_R), AppEvent::Refresh);
+    }
+
+    #[test]
+    fn test_map_rule_management_keys() {
+        let handler = EventHandler::default();
+
+        // Add rule
+        let key_a = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_a), AppEvent::AddRule);
+
+        // Delete rule
+        let key_d = KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_d), AppEvent::DeleteRule);
+
+        // Edit rule
+        let key_e = KeyEvent::new(KeyCode::Char('e'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_e), AppEvent::EditRule);
+
+        // Cancel
+        let key_c = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_c), AppEvent::Cancel);
+
+        let key_esc = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_esc), AppEvent::Cancel);
     }
 
     #[test]

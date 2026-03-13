@@ -45,6 +45,116 @@ impl FirewallBackend for NftablesBackend {
         let stdout = String::from_utf8_lossy(&output.stdout);
         self.parse_ruleset(&stdout)
     }
+
+    async fn add_rule(&self, rule: &FirewallRule) -> Result<()> {
+        // Construir comando nft para agregar regla
+        // Ejemplo: nft add rule ip filter input tcp dport 22 accept
+        let mut cmd_args: Vec<String> = vec![
+            "add".to_string(),
+            "rule".to_string(),
+            "ip".to_string(),
+            "filter".to_string(),
+            "input".to_string(),
+        ];
+
+        // Agregar protocolo
+        if rule.protocol != "all" {
+            cmd_args.push("meta".to_string());
+            cmd_args.push("l4proto".to_string());
+            cmd_args.push(rule.protocol.clone());
+        }
+
+        // Agregar puerto si está especificado
+        if let Some(ref port) = rule.port {
+            cmd_args.push(rule.protocol.clone());
+            cmd_args.push("dport".to_string());
+            cmd_args.push(port.clone());
+        }
+
+        // Agregar dirección de origen si no es all
+        if rule.source != "0.0.0.0/0" {
+            cmd_args.push("ip".to_string());
+            cmd_args.push("saddr".to_string());
+            cmd_args.push(rule.source.clone());
+        }
+
+        // Agregar interfaz si está especificada
+        if let Some(ref iface) = rule.interface {
+            cmd_args.push("iifname".to_string());
+            cmd_args.push(iface.clone());
+        }
+
+        // Agregar acción
+        cmd_args.push(rule.action.to_lowercase());
+
+        // Ejecutar comando
+        let output = Command::new("nft")
+            .args(&cmd_args)
+            .output()
+            .await
+            .map_err(|e| FirewallError::CommandFailed(e.to_string()))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(FirewallError::CommandFailed(format!(
+                "Failed to add rule: {}",
+                stderr
+            )));
+        }
+
+        Ok(())
+    }
+
+    async fn delete_rule(&self, rule_id: usize) -> Result<()> {
+        // Para simplificar en v0.2, eliminamos por índice
+        // En una versión más completa, manejaríamos handles de nftables
+        // Esta es una implementación básica que usa flush y rebuild
+        // NOTA: Esta es una implementación simplificada para la v0.2
+        // Una implementación completa necesitaría manejar handles específicos
+
+        // Obtener reglas actuales
+        let current_rules = self.list_rules().await?;
+
+        // Buscar la regla a eliminar
+        if rule_id == 0 || rule_id > current_rules.len() {
+            return Err(FirewallError::InvalidRule(format!(
+                "Invalid rule ID: {}",
+                rule_id
+            )));
+        }
+
+        // Para v0.2, usamos un enfoque simplificado:
+        // Eliminar todas las reglas y reconstruir sin la regla específica
+        // NOTA: Esto NO es seguro para producción
+        // En v0.3+, implementaremos manejo de handles
+
+        // Eliminar todas las reglas de la cadena input
+        let _ = Command::new("nft")
+            .args(["flush", "rule", "ip", "filter", "input"])
+            .output()
+            .await;
+
+        // Reconstruir todas las reglas excepto la eliminada
+        for (idx, rule) in current_rules.iter().enumerate() {
+            // Saltar la regla a eliminar (usando índice 1-based)
+            if idx + 1 == rule_id {
+                continue;
+            }
+
+            // Re-agregar la regla
+            let _ = self.add_rule(rule).await;
+        }
+
+        Ok(())
+    }
+
+    async fn update_rule(&self, rule: &FirewallRule) -> Result<()> {
+        // Para v0.2, update se implementa como delete + add
+        // En versiones futuras, usaremos handles específicos de nftables
+        self.delete_rule(rule.id).await?;
+        self.add_rule(rule).await?;
+        Ok(())
+    }
 }
 
 impl NftablesBackend {

@@ -44,5 +44,11 @@ pub trait FirewallBackend: Send + Sync {
 
     async fn list_rules(&self) -> Result<Vec<FirewallRule>>;
 
+    async fn add_rule(&self, rule: &FirewallRule) -> Result<()>;
+
+    async fn delete_rule(&self, rule_id: usize) -> Result<()>;
+
+    async fn update_rule(&self, rule: &FirewallRule) -> Result<()>;
+
     async fn check_available(&self) -> Result<bool>;
 }

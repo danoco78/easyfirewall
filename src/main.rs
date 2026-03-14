@@ -1,6 +1,7 @@
 mod app;
 mod config;
 mod events;
+mod export;
 mod firewall;
 mod forms;
 mod history;
@@ -18,10 +19,12 @@ use std::io;
 use std::process;
 
 use app::App;
-use app::ViewMode;
 use config::Config;
 use events::EventHandler;
+use export::ExportedRule;
+use export::RuleExporter;
 use firewall::nftables::NftablesBackend;
+use firewall::iptables::IptablesBackend;
 use ui::AppUi;
 
 #[tokio::main]
@@ -120,6 +123,16 @@ async fn main() -> Result<()> {
                             // Historial se actualiza automáticamente
                         }
                     }
+                } else if event == events::AppEvent::ExportRules {
+                    if let Err(e) = handle_export_rules(&app).await {
+                        eprintln!("Error exporting rules: {}", e);
+                    }
+                } else if event == events::AppEvent::ImportRules {
+                    if let Err(e) = handle_import_rules(&mut app).await {
+                        eprintln!("Error importing rules: {}", e);
+                    }
+                } else if event == events::AppEvent::SwitchBackend {
+                    eprintln!("Backend switching not yet implemented");
                 } else {
                     // Manejar otros eventos
                     app.handle_event(event);
@@ -137,6 +150,59 @@ async fn main() -> Result<()> {
     )?;
 
     println!("EasyFirewall v0.1.0 - Goodbye!");
+    Ok(())
+}
+
+async fn handle_export_rules<B>(app: &App<B>) -> anyhow::Result<()>
+where
+    B: crate::firewall::FirewallBackend,
+{
+    let export_path = std::path::PathBuf::from("/tmp/easyfirewall_rules.json");
+
+    RuleExporter::export_rules(app.rules(), "nftables", &export_path).await?;
+
+    println!("Rules exported to: {}", export_path.display());
+
+    Ok(())
+}
+
+async fn handle_import_rules<B>(app: &mut App<B>) -> anyhow::Result<()>
+where
+    B: crate::firewall::FirewallBackend,
+{
+    let import_path = std::path::PathBuf::from("/tmp/easyfirewall_rules.json");
+
+    if !import_path.exists() {
+        anyhow::bail!("Import file not found: {}", import_path.display());
+    }
+
+    let imported_rules: Vec<ExportedRule> = RuleExporter::import_rules(&import_path).await?;
+    let rules_count = imported_rules.len();
+
+    println!("Importing {} rules...", rules_count);
+
+    for exported_rule in imported_rules {
+        let rule = crate::firewall::FirewallRule {
+            id: app.rules().len() + 1,
+            action: exported_rule.action,
+            protocol: exported_rule.protocol,
+            port: exported_rule.port,
+            source: exported_rule.source,
+            destination: exported_rule.destination,
+            interface: exported_rule.interface,
+            packets: 0,
+            bytes: 0,
+        };
+
+        if let Err(e) = app.backend().add_rule(&rule).await {
+            eprintln!("Error importing rule: {}", e);
+        }
+    }
+
+    app.load_rules().await?;
+
+    println!("Imported {} rules", rules_count);
+
     Ok(())
 }
 

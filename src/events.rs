@@ -22,6 +22,9 @@ pub enum AppEvent {
     Cancel,
     ToggleMonitoring,
     ToggleHistory,
+    ExportRules,
+    ImportRules,
+    SwitchBackend,
     Unknown,
 }
 
@@ -71,6 +74,12 @@ impl EventHandler {
             (KeyCode::Char('M'), KeyModifiers::NONE) => AppEvent::ToggleMonitoring,
             (KeyCode::Char('h'), KeyModifiers::NONE) => AppEvent::ToggleHistory,
             (KeyCode::Char('H'), KeyModifiers::NONE) => AppEvent::ToggleHistory,
+            (KeyCode::Char('x'), KeyModifiers::NONE) => AppEvent::ExportRules,
+            (KeyCode::Char('X'), KeyModifiers::NONE) => AppEvent::ExportRules,
+            (KeyCode::Char('i'), KeyModifiers::NONE) => AppEvent::ImportRules,
+            (KeyCode::Char('I'), KeyModifiers::NONE) => AppEvent::ImportRules,
+            (KeyCode::Char('b'), KeyModifiers::NONE) => AppEvent::SwitchBackend,
+            (KeyCode::Char('B'), KeyModifiers::NONE) => AppEvent::SwitchBackend,
             (KeyCode::Up, _) | (KeyCode::Char('k'), KeyModifiers::NONE) => AppEvent::Up,
             (KeyCode::Down, _) | (KeyCode::Char('j'), KeyModifiers::NONE) => AppEvent::Down,
             (KeyCode::Enter, _) => AppEvent::Enter,

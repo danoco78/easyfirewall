@@ -164,6 +164,18 @@ impl<B: FirewallBackend> App<B> {
                 }
             }
 
+            AppEvent::ExportRules => {
+                // Manejado en main loop
+            }
+
+            AppEvent::ImportRules => {
+                // Manejado en main loop
+            }
+
+            AppEvent::SwitchBackend => {
+                // Manejado en main loop
+            }
+
             AppEvent::Unknown => {
                 // Ignorar eventos desconocidos
             }
@@ -296,6 +308,10 @@ impl<B: FirewallBackend> App<B> {
 
     pub fn set_history_offset(&mut self, offset: usize) {
         self.history_offset = offset;
+    }
+
+    pub fn backend(&self) -> &B {
+        &self.backend
     }
 }
 

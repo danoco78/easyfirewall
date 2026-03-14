@@ -1,8 +1,17 @@
 use crate::firewall::{FirewallBackend, FirewallRule};
 use crate::events::AppEvent;
 use crate::forms::{FormMode, FormState};
+use crate::history::{HistoryAction, HistoryLog};
+use crate::monitor::TrafficMonitor;
 
 use anyhow::Result;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ViewMode {
+    Rules,
+    Monitoring,
+    History,
+}
 
 pub struct App<B: FirewallBackend> {
     backend: B,
@@ -10,6 +19,11 @@ pub struct App<B: FirewallBackend> {
     selected_index: usize,
     show_details: bool,
     form: Option<FormState>,
+    view_mode: ViewMode,
+    history: HistoryLog,
+    monitor: TrafficMonitor,
+    monitoring_stats: Option<crate::monitor::TrafficStats>,
+    history_offset: usize,
     running: bool,
 }
 
@@ -21,6 +35,11 @@ impl<B: FirewallBackend> App<B> {
             selected_index: 0,
             show_details: false,
             form: None,
+            view_mode: ViewMode::Rules,
+            history: HistoryLog::new(100, false, None),
+            monitor: TrafficMonitor::new("nftables".to_string(), 60),
+            monitoring_stats: None,
+            history_offset: 0,
             running: true,
         }
     }
@@ -123,6 +142,28 @@ impl<B: FirewallBackend> App<B> {
                 // No hacer nada si no hay formulario activo
             }
 
+            AppEvent::ToggleMonitoring => {
+                match self.view_mode {
+                    ViewMode::Monitoring => {
+                        self.set_view_mode(ViewMode::Rules);
+                    }
+                    _ => {
+                        self.set_view_mode(ViewMode::Monitoring);
+                    }
+                }
+            }
+
+            AppEvent::ToggleHistory => {
+                match self.view_mode {
+                    ViewMode::History => {
+                        self.set_view_mode(ViewMode::Rules);
+                    }
+                    _ => {
+                        self.set_view_mode(ViewMode::History);
+                    }
+                }
+            }
+
             AppEvent::Unknown => {
                 // Ignorar eventos desconocidos
             }
@@ -215,6 +256,46 @@ impl<B: FirewallBackend> App<B> {
 
     pub fn cancel_form(&mut self) {
         self.form = None;
+    }
+
+    pub fn view_mode(&self) -> ViewMode {
+        self.view_mode
+    }
+
+    pub fn set_view_mode(&mut self, mode: ViewMode) {
+        self.view_mode = mode;
+        // Reset detalles cuando cambiamos de vista
+        self.show_details = false;
+    }
+
+    pub fn history(&self) -> &HistoryLog {
+        &self.history
+    }
+
+    pub fn history_mut(&mut self) -> &mut HistoryLog {
+        &mut self.history
+    }
+
+    pub async fn refresh_monitoring(&mut self) -> anyhow::Result<()> {
+        match self.monitor.collect_stats().await {
+            Ok(stats) => {
+                self.monitoring_stats = Some(stats);
+                Ok(())
+            }
+            Err(e) => anyhow::bail!("Failed to collect monitoring stats: {}", e),
+        }
+    }
+
+    pub fn monitoring_stats(&self) -> Option<&crate::monitor::TrafficStats> {
+        self.monitoring_stats.as_ref()
+    }
+
+    pub fn history_offset(&self) -> usize {
+        self.history_offset
+    }
+
+    pub fn set_history_offset(&mut self, offset: usize) {
+        self.history_offset = offset;
     }
 }
 

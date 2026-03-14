@@ -20,6 +20,8 @@ pub enum AppEvent {
     DeleteRule,
     EditRule,
     Cancel,
+    ToggleMonitoring,
+    ToggleHistory,
     Unknown,
 }
 
@@ -65,6 +67,10 @@ impl EventHandler {
             (KeyCode::Char('E'), KeyModifiers::NONE) => AppEvent::EditRule,
             (KeyCode::Char('c'), KeyModifiers::NONE) | (KeyCode::Esc, _) => AppEvent::Cancel,
             (KeyCode::Char('C'), KeyModifiers::NONE) => AppEvent::Cancel,
+            (KeyCode::Char('m'), KeyModifiers::NONE) => AppEvent::ToggleMonitoring,
+            (KeyCode::Char('M'), KeyModifiers::NONE) => AppEvent::ToggleMonitoring,
+            (KeyCode::Char('h'), KeyModifiers::NONE) => AppEvent::ToggleHistory,
+            (KeyCode::Char('H'), KeyModifiers::NONE) => AppEvent::ToggleHistory,
             (KeyCode::Up, _) | (KeyCode::Char('k'), KeyModifiers::NONE) => AppEvent::Up,
             (KeyCode::Down, _) | (KeyCode::Char('j'), KeyModifiers::NONE) => AppEvent::Down,
             (KeyCode::Enter, _) => AppEvent::Enter,
@@ -140,6 +146,19 @@ mod tests {
 
         let key_esc = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
         assert_eq!(handler.map_key_event(key_esc), AppEvent::Cancel);
+    }
+
+    #[test]
+    fn test_map_view_toggle_keys() {
+        let handler = EventHandler::default();
+
+        // Toggle monitoring
+        let key_m = KeyEvent::new(KeyCode::Char('m'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_m), AppEvent::ToggleMonitoring);
+
+        // Toggle history
+        let key_h = KeyEvent::new(KeyCode::Char('h'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_h), AppEvent::ToggleHistory);
     }
 
     #[test]

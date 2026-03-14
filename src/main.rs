@@ -3,6 +3,8 @@ mod config;
 mod events;
 mod firewall;
 mod forms;
+mod history;
+mod monitor;
 mod ui;
 
 use anyhow::Result;
@@ -16,6 +18,7 @@ use std::io;
 use std::process;
 
 use app::App;
+use app::ViewMode;
 use config::Config;
 use events::EventHandler;
 use firewall::nftables::NftablesBackend;
@@ -68,7 +71,12 @@ async fn main() -> Result<()> {
         ui.set_show_details(app.show_details());
 
         terminal.draw(|f| {
-            ui.render_frame(f);
+            ui.render_frame(
+                f,
+                app.view_mode(),
+                app.monitoring_stats(),
+                app.history(),
+            );
             // Renderizar formulario si está activo
             if let Some(form) = app.form() {
                 forms::FormRenderer::render(f, form);
@@ -95,10 +103,22 @@ async fn main() -> Result<()> {
                 }
             } else {
                 // Manejar eventos normales de la aplicación
-                // Manejar refresh de reglas
+                // Manejar refresh de reglas o monitoreo
                 if event == events::AppEvent::Refresh {
-                    if let Err(e) = app.load_rules().await {
-                        eprintln!("Error refreshing rules: {}", e);
+                    match app.view_mode() {
+                        app::ViewMode::Rules => {
+                            if let Err(e) = app.load_rules().await {
+                                eprintln!("Error refreshing rules: {}", e);
+                            }
+                        }
+                        app::ViewMode::Monitoring => {
+                            if let Err(e) = app.refresh_monitoring().await {
+                                eprintln!("Error refreshing monitoring: {}", e);
+                            }
+                        }
+                        app::ViewMode::History => {
+                            // Historial se actualiza automáticamente
+                        }
                     }
                 } else {
                     // Manejar otros eventos

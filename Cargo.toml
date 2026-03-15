@@ -1,0 +1,29 @@
+[package]
+name = "easyfirewall"
+version = "0.1.0"
+edition = "2021"
+authors = ["David Noreña <danoco78@gmail.com>"]
+license = "MPL-2.0"
+description = "A modern TUI for managing Linux firewalls with real-time monitoring, rule management, and import/export capabilities."
+repository = "https://github.com/danoco78/easyfirewall"
+homepage = "https://github.com/danoco78/easyfirewall"
+readme = "README.md"
+keywords = ["firewall", "nftables", "iptables", "tui", "security"]
+categories = ["command-line-utilities", "command-line-interface"]
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+thiserror = "2.0"
+anyhow = "1.0"
+tokio = { version = "1.42", features = ["full"] }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+libc = "0.2"
+chrono = { version = "0.4", features = ["serde"] }
+tempfile = "3.15"
+
+[badges]
+maintenance = { status = "actively-developed" }

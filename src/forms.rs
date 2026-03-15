@@ -27,6 +27,7 @@ pub struct FormState {
     pub action: String,
     pub current_field: usize,
     pub confirmed: bool,
+    pub cancelled: bool,
     pub error_message: Option<String>,
 }
 
@@ -42,6 +43,7 @@ impl FormState {
             action: "ACCEPT".to_string(),
             current_field: 0,
             confirmed: false,
+            cancelled: false,
             error_message: None,
         }
     }
@@ -57,6 +59,7 @@ impl FormState {
             action: rule.action.clone(),
             current_field: 0,
             confirmed: false,
+            cancelled: false,
             error_message: None,
         }
     }
@@ -72,6 +75,7 @@ impl FormState {
             action: String::new(),
             current_field: 0,
             confirmed: false,
+            cancelled: false,
             error_message: None,
         }
     }
@@ -147,7 +151,7 @@ impl FormState {
                 self.confirmed = true;
             }
             KeyCode::Esc => {
-                self.confirmed = false;
+                self.cancelled = true;
             }
             _ => {}
         }

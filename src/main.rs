@@ -92,16 +92,29 @@ async fn main() -> Result<()> {
             if app.has_active_form() {
                 // Leer evento de teclado crudo
                 if let Ok(key_event) = crossterm::event::read() {
-                    if let Some(form) = app.form_mut() {
-                        form.handle_input(&key_event);
+                    let form_confirmed;
+                    let form_cancelled;
 
-                        // Chequear si el formulario confirmó
-                        if form.confirmed {
-                            if let Err(e) = app.save_form().await {
-                                // Error guardando el formulario
-                                eprintln!("Error saving form: {}", e);
-                            }
+                    // Obtener referencias mutables y procesar el evento
+                    {
+                        if let Some(form) = app.form_mut() {
+                            form.handle_input(&key_event);
+                            form_confirmed = form.confirmed;
+                            form_cancelled = form.cancelled;
+                        } else {
+                            form_confirmed = false;
+                            form_cancelled = false;
                         }
+                    }
+
+                    // Procesar confirmación o cancelación
+                    if form_confirmed {
+                        if let Err(e) = app.save_form().await {
+                            // Error guardando el formulario
+                            eprintln!("Error saving form: {}", e);
+                        }
+                    } else if form_cancelled {
+                        app.cancel_form();
                     }
                 }
             } else {

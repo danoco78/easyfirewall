@@ -139,7 +139,13 @@ impl<B: FirewallBackend> App<B> {
             }
 
             AppEvent::Cancel => {
-                // No hacer nada si no hay formulario activo
+                // Cancel form or return to Rules view
+                if self.has_active_form() {
+                    self.cancel_form();
+                } else {
+                    // Return to Rules view from any other view
+                    self.set_view_mode(ViewMode::Rules);
+                }
             }
 
             AppEvent::ToggleMonitoring => {

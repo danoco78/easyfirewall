@@ -145,6 +145,7 @@ mod tests {
             source: "0.0.0.0/0".to_string(),
             destination: "0.0.0.0/0".to_string(),
             interface: Some("eth0".to_string()),
+            origin: crate::firewall::RuleOrigin::System,
             packets: 100,
             bytes: 1000,
         };
@@ -187,6 +188,7 @@ mod tests {
             source: "0.0.0.0/0".to_string(),
             destination: "0.0.0.0/0".to_string(),
             interface: None,
+            origin: crate::firewall::RuleOrigin::System,
             packets: 0,
             bytes: 0,
         }];
@@ -223,6 +225,7 @@ mod tests {
             source: "0.0.0.0/0".to_string(),
             destination: "0.0.0.0/0".to_string(),
             interface: None,
+            origin: crate::firewall::RuleOrigin::System,
             packets: 0,
             bytes: 0,
         }];

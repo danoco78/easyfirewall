@@ -235,6 +235,7 @@ impl NftablesBackend {
             source,
             destination,
             interface: None,
+            origin: crate::firewall::RuleOrigin::System,
             packets: 0,
             bytes: 0,
         })

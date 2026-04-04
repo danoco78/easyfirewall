@@ -204,6 +204,7 @@ impl<B: FirewallBackend> App<B> {
         &self.rules
     }
 
+    #[allow(dead_code)]
     pub fn rules_mut(&mut self) -> &mut Vec<FirewallRule> {
         &mut self.rules
     }
@@ -224,9 +225,7 @@ impl<B: FirewallBackend> App<B> {
         if let Some(form) = self.form.take() {
             match form.mode {
                 FormMode::AddRule => {
-                    // Validar y crear regla
                     if let Err(e) = form.validate() {
-                        // Reinsertar el formulario con el error
                         let mut new_form = form;
                         new_form.error_message = Some(e);
                         new_form.confirmed = false;
@@ -234,15 +233,18 @@ impl<B: FirewallBackend> App<B> {
                         anyhow::bail!("Validation failed");
                     }
 
-                    // Crear nueva regla
                     let new_id = self.rules.len() + 1;
                     if let Some(rule) = form.to_rule(new_id) {
+                        let port = rule.port.clone().unwrap_or_else(|| "*".to_string());
                         self.backend.add_rule(&rule).await?;
                         self.load_rules().await?;
+                        self.history.add(HistoryAction::RuleAdded {
+                            id: new_id,
+                            port,
+                        });
                     }
                 }
                 FormMode::EditRule(rule_id) => {
-                    // Validar y actualizar regla
                     if let Err(e) = form.validate() {
                         let mut new_form = form;
                         new_form.error_message = Some(e);
@@ -252,19 +254,36 @@ impl<B: FirewallBackend> App<B> {
                     }
 
                     if let Some(rule) = form.to_rule(rule_id) {
+                        let port = rule.port.clone().unwrap_or_else(|| "*".to_string());
                         self.backend.update_rule(&rule).await?;
                         self.load_rules().await?;
+                        self.history.add(HistoryAction::RuleEdited {
+                            id: rule_id,
+                            port,
+                        });
                     }
                 }
                 FormMode::DeleteConfirm(rule_id) => {
                     if form.confirmed {
+                        // Buscar port de la regla antes de eliminar
+                        let port = self
+                            .rules
+                            .iter()
+                            .find(|r| r.id == rule_id)
+                            .and_then(|r| r.port.clone())
+                            .unwrap_or_else(|| "*".to_string());
+
                         self.backend.delete_rule(rule_id).await?;
                         self.load_rules().await?;
 
-                        // Ajustar selected_index si es necesario
                         if self.selected_index >= self.rules.len() && !self.rules.is_empty() {
                             self.selected_index = self.rules.len() - 1;
                         }
+
+                        self.history.add(HistoryAction::RuleDeleted {
+                            id: rule_id,
+                            port,
+                        });
                     }
                 }
             }
@@ -308,10 +327,12 @@ impl<B: FirewallBackend> App<B> {
         self.monitoring_stats.as_ref()
     }
 
+    #[allow(dead_code)]
     pub fn history_offset(&self) -> usize {
         self.history_offset
     }
 
+    #[allow(dead_code)]
     pub fn set_history_offset(&mut self, offset: usize) {
         self.history_offset = offset;
     }
@@ -387,6 +408,7 @@ mod tests {
                     source: "0.0.0.0/0".to_string(),
                     destination: "0.0.0.0/0".to_string(),
                     interface: None,
+                    origin: crate::firewall::RuleOrigin::System,
                     packets: 0,
                     bytes: 0,
                 },
@@ -398,6 +420,7 @@ mod tests {
                     source: "0.0.0.0/0".to_string(),
                     destination: "0.0.0.0/0".to_string(),
                     interface: None,
+                    origin: crate::firewall::RuleOrigin::System,
                     packets: 0,
                     bytes: 0,
                 },
@@ -409,6 +432,7 @@ mod tests {
                     source: "0.0.0.0/0".to_string(),
                     destination: "0.0.0.0/0".to_string(),
                     interface: None,
+                    origin: crate::firewall::RuleOrigin::System,
                     packets: 0,
                     bytes: 0,
                 },
@@ -457,6 +481,7 @@ mod tests {
                 source: "0.0.0.0/0".to_string(),
                 destination: "0.0.0.0/0".to_string(),
                 interface: None,
+                origin: crate::firewall::RuleOrigin::System,
                 packets: 0,
                 bytes: 0,
             }],
@@ -520,6 +545,7 @@ mod tests {
                 source: "0.0.0.0/0".to_string(),
                 destination: "0.0.0.0/0".to_string(),
                 interface: None,
+                origin: crate::firewall::RuleOrigin::System,
                 packets: 0,
                 bytes: 0,
             }],
@@ -549,6 +575,7 @@ mod tests {
                 source: "0.0.0.0/0".to_string(),
                 destination: "0.0.0.0/0".to_string(),
                 interface: None,
+                origin: crate::firewall::RuleOrigin::System,
                 packets: 0,
                 bytes: 0,
             }],

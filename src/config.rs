@@ -29,10 +29,12 @@ impl Config {
         Ok(Self::default())
     }
 
+    #[allow(dead_code)]
     pub fn log_file(&self) -> &PathBuf {
         &self.log_file
     }
 
+    #[allow(dead_code)]
     pub fn export_dir(&self) -> &PathBuf {
         &self.export_dir
     }

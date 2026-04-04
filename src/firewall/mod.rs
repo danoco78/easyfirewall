@@ -12,15 +12,35 @@ pub struct FirewallRule {
     pub source: String,
     pub destination: String,
     pub interface: Option<String>,
+    pub origin: RuleOrigin,
     pub packets: u64,
     pub bytes: u64,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum RuleOrigin {
+    System,
+    EasyFirewall,
+    External,
+}
+
+impl RuleOrigin {
+    pub fn display_name(&self) -> &str {
+        match self {
+            RuleOrigin::System => "system",
+            RuleOrigin::EasyFirewall => "easyfirewall",
+            RuleOrigin::External => "external",
+        }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum FirewallError {
+    #[allow(dead_code)]
     #[error("Permission denied: root privileges required")]
     PermissionDenied,
 
+    #[allow(dead_code)]
     #[error("Backend not available: {0}")]
     BackendNotAvailable(String),
 
@@ -30,6 +50,7 @@ pub enum FirewallError {
     #[error("Failed to execute command: {0}")]
     CommandFailed(String),
 
+    #[allow(dead_code)]
     #[error("Parse error: {0}")]
     ParseError(String),
 

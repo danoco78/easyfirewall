@@ -309,6 +309,7 @@ impl IptablesBackend {
             source,
             destination,
             interface,
+            origin: crate::firewall::RuleOrigin::System,
             packets: 0,
             bytes: 0,
         })

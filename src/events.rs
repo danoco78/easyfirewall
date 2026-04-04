@@ -101,8 +101,8 @@ mod tests {
         let key_q = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
         assert_eq!(handler.map_key_event(key_q), AppEvent::Quit);
 
-        let key_Q = KeyEvent::new(KeyCode::Char('Q'), KeyModifiers::NONE);
-        assert_eq!(handler.map_key_event(key_Q), AppEvent::Quit);
+        let key_q_upper = KeyEvent::new(KeyCode::Char('Q'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_q_upper), AppEvent::Quit);
     }
 
     #[test]
@@ -129,8 +129,8 @@ mod tests {
         let key_r = KeyEvent::new(KeyCode::Char('r'), KeyModifiers::NONE);
         assert_eq!(handler.map_key_event(key_r), AppEvent::Refresh);
 
-        let key_R = KeyEvent::new(KeyCode::Char('R'), KeyModifiers::NONE);
-        assert_eq!(handler.map_key_event(key_R), AppEvent::Refresh);
+        let key_r_upper = KeyEvent::new(KeyCode::Char('R'), KeyModifiers::NONE);
+        assert_eq!(handler.map_key_event(key_r_upper), AppEvent::Refresh);
     }
 
     #[test]

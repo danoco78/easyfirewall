@@ -10,7 +10,7 @@ mod ui;
 
 use anyhow::Result;
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture, Event},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -24,7 +24,6 @@ use events::EventHandler;
 use export::ExportedRule;
 use export::RuleExporter;
 use firewall::nftables::NftablesBackend;
-use firewall::iptables::IptablesBackend;
 use ui::AppUi;
 
 #[tokio::main]
@@ -137,7 +136,7 @@ async fn main() -> Result<()> {
                         }
                     }
                 } else if event == events::AppEvent::ExportRules {
-                    if let Err(e) = handle_export_rules(&app).await {
+                    if let Err(e) = handle_export_rules(&mut app).await {
                         eprintln!("Error exporting rules: {}", e);
                     }
                 } else if event == events::AppEvent::ImportRules {
@@ -166,15 +165,16 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn handle_export_rules<B>(app: &App<B>) -> anyhow::Result<()>
+async fn handle_export_rules<B>(app: &mut App<B>) -> anyhow::Result<()>
 where
     B: crate::firewall::FirewallBackend,
 {
     let export_path = std::path::PathBuf::from("/tmp/easyfirewall_rules.json");
+    let count = app.rules().len();
 
     RuleExporter::export_rules(app.rules(), "nftables", &export_path).await?;
 
-    println!("Rules exported to: {}", export_path.display());
+    app.history_mut().add(crate::history::HistoryAction::BulkExport { count });
 
     Ok(())
 }
@@ -203,6 +203,7 @@ where
             source: exported_rule.source,
             destination: exported_rule.destination,
             interface: exported_rule.interface,
+            origin: crate::firewall::RuleOrigin::External,
             packets: 0,
             bytes: 0,
         };
@@ -214,7 +215,9 @@ where
 
     app.load_rules().await?;
 
-    println!("Imported {} rules", rules_count);
+    app.history_mut().add(crate::history::HistoryAction::BulkImport {
+        count: rules_count,
+    });
 
     Ok(())
 }

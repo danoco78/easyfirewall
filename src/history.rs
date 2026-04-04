@@ -98,6 +98,7 @@ impl HistoryLog {
         }
     }
 
+    #[allow(dead_code)]
     pub fn default() -> Self {
         Self::new(100, false, None)
     }
@@ -119,6 +120,7 @@ impl HistoryLog {
         }
     }
 
+    #[allow(dead_code)]
     pub fn entries(&self) -> &VecDeque<HistoryEntry> {
         &self.entries
     }
@@ -160,6 +162,7 @@ impl HistoryLog {
             .collect()
     }
 
+    #[allow(dead_code)]
     pub async fn load_from_disk(&mut self) -> std::io::Result<()> {
         if let Some(ref log_file) = self.log_file {
             use tokio::fs;
@@ -200,6 +203,7 @@ impl HistoryLog {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub async fn export_to_file(&self, path: PathBuf) -> std::io::Result<()> {
         use tokio::fs;
 

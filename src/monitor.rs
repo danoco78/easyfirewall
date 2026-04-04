@@ -37,21 +37,25 @@ impl TrafficStats {
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_blocked_bytes(mut self, bytes: u64) -> Self {
         self.blocked_bytes = bytes;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_blocked_entries(mut self, entries: Vec<BlockedEntry>) -> Self {
         self.blocked_entries = entries;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_most_attacked_ports(mut self, ports: Vec<(String, u64)>) -> Self {
         self.most_attacked_ports = ports;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_most_blocked_ips(mut self, ips: Vec<(String, u64)>) -> Self {
         self.most_blocked_ips = ips;
         self
@@ -62,6 +66,7 @@ impl TrafficStats {
 pub enum MonitoringError {
     ParseError(String),
     IoError(String),
+    #[allow(dead_code)]
     LogFileNotFound(String),
     UnsupportedBackend(String),
 }
@@ -191,7 +196,6 @@ impl TrafficMonitor {
     }
 
     fn parse_kernel_logs(&self, log_content: &str) -> Vec<BlockedEntry> {
-        let mut entries = Vec::new();
         let mut ip_counts: HashMap<String, BlockedEntry> = HashMap::new();
 
         // Parser simple para logs de firewall
@@ -208,7 +212,7 @@ impl TrafficMonitor {
             }
         }
 
-        entries = ip_counts.into_values().collect();
+        let mut entries: Vec<BlockedEntry> = ip_counts.into_values().collect();
         entries.sort_by(|a, b| b.attempts.cmp(&a.attempts));
 
         entries

@@ -1,6 +1,6 @@
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
@@ -99,6 +99,7 @@ impl FormState {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_field_name(index: usize) -> &'static str {
         match index {
             0 => "Protocol",
@@ -181,7 +182,7 @@ impl FormState {
     }
 
     pub fn to_rule(&self, id: usize) -> Option<FirewallRule> {
-        if let Err(e) = self.validate() {
+        if let Err(_e) = self.validate() {
             return None;
         }
 
@@ -209,6 +210,7 @@ impl FormState {
             } else {
                 Some(self.interface.clone())
             },
+            origin: crate::firewall::RuleOrigin::EasyFirewall,
             packets: 0,
             bytes: 0,
         })
